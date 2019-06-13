@@ -264,7 +264,7 @@ const func = () => (
 
 
 /*
-	Component lifecycle - creation:
+	Component lifecycle - creation(initial render):
 	1. constructor()
 	2. getDerivedStateFromProps(props, state)	-- invoked right before calling the render method
 	3. render()
@@ -273,7 +273,7 @@ const func = () => (
 */
 
 /*
-	Component lifecycle - update:
+	Component lifecycle - update(re-render, when props or state changes):
 	1. getDerivedStateFromProps(props, state)
 	2. shouldComponentUpdate(nextProps, nextState)	-- may cancel updating process
 	3. render()
@@ -282,9 +282,41 @@ const func = () => (
 	6. componentDidUpdate()
 */
 
+/* 
+	constructor(props)
+	Purpose: initialize state
+	Do not cause side-effect (ex: http request...)
+*/
+constructor(props) {
+	super(props);
+	state = {
+		name: 'Jacob'
+	}
+}
+
+/*
+	getDerivedStateFromProps(props, state)
+	Purpose: update state when props change
+	Do not cause side-effect (ex: http request...)
+	Not used very often
+*/
+
+// Need to return updated state
+static getDerivedStateFromProps(props, state) {
+	return state;
+}
+
+/*
+	componentDidMount()
+	Purpose: cause side-effect here
+	Do not update state because it will trigger re-render cycle
+	unless you do it in a then block of a promise
+*/ 
+
 /*
 	shouldComponentUpdate(nextProps, nextState)
-	Purpose:
+	Purpose: may cancel updating process for performance optimization
+	Do not cause side-effect (ex: http request...)
 */
 
 // Return true to update, false to not
@@ -296,3 +328,182 @@ shouldComponentUpdate(nextProps, nextState) {
 	else
 		return false
 }
+
+/*
+	getSnapshotBeforeUpdate(prevProps, prevState)
+	Purpose: last-minute DOM operation(ex: get scrolling position from user)
+	Do not cause side-effect (ex: http request...)
+*/
+getSnapshotBeforeUpdate(prevProps, prevState) {
+	console.log('		getSnapShotBeforeUpdate!!!');
+	console.log('prevProps', prevProps)
+	console.log('prevState', prevState)
+	console.log('--------------------');
+	return {'msg': 'I am the snapshot'};
+}
+
+/*
+	componentDidUpdate()
+	Purpose: 
+	Cause side-effect here
+	Do not update state
+*/
+
+// Snapshot from getSnapshotBeforeUpdate is passed to here 
+componentDidUpdate(prevProps, prevState, snapshot) {
+	console.log('CDU!!!');
+	console.log('prevProps :', prevProps);
+	console.log('prevState :', prevState);
+	console.log(snapshot);
+}
+
+// If the parent component gets re-rendered, all of its child components will get re-rendered
+// Because they are all in the same render() function.
+
+/*
+	Optimization
+	Use shouldComponentUpdate()
+	Use PureComponent which is a component that implements shouldComponentUpdate() to check all props
+	export default React.memo(COMPONENT_NAME) 	-- for functional components
+		- React takes a snapshot of the component and only re-render when inputs change
+	Pass props that do not change often
+	It is not wise to use shouldComponentUpdate() on all components because they take time too
+		- Evaluate how often the component updates
+*/ 
+
+// You can create an array and render it
+const jsx = [
+	<div>Hello</div>
+]
+
+render() {
+	return jsx
+}
+
+// Use Aux component (Higher Order Component) to wrap around all components to avoid react key requirements
+import React from 'react';
+
+const aux = props => props.children;
+
+export default aux;
+
+// App.js
+import Aux from 'PATH'
+
+<Aux>
+	EVERYTHING...
+</Aux>
+
+// React.Fragment does the same thing
+<React.Fragment>
+	...
+</React.Fragment>
+
+// Higher Order Component takes in a component and returns a component.
+// A component that wraps around other components
+// It is convention to name HOC like this "WithClass.js"
+
+// Example
+import React from 'react'
+
+const withClass = props => {
+	<div className={props.classes}>
+		{props.children}
+	</div>
+}
+
+// App.js 
+import WithClass from 'PATH'
+
+return(
+	<WithClass classes={...}>
+		...
+	</WithClass>
+)
+
+// Example type 2
+import React from 'react'
+
+// component parameter needs to be capitalized
+const withClass = (WrappedComponent, className) => {
+	// Returns a functional component
+	return props => (
+		<div className={className}>
+			<WrappedComponent />
+		</div>
+	)
+}
+
+// App.js
+export default withClass(App, classes.App)
+
+// Spread Attributes, these two are equivalent
+function App1() {
+	return <Greeting firstName="Ben" lastName="Hector" />;
+}
+  
+function App2() {
+	const props = {firstName: 'Ben', lastName: 'Hector'};
+	return <Greeting {...props} />;
+}
+
+// Ternary operator in assignment
+const x = 10;
+const temp = x === 10 ? 1 : 2;
+
+// setState() is not guaranteed to execute right away.
+this.setState({
+	// Do not do this, it might retrieve the wrong state.
+	changeCounter: this.state.changeCounter + 1
+})
+
+// Use prevState
+this.setState((prevState, props) => (
+	{ changeCounter: prevState.changeCounter + 1 }
+))
+
+/* 
+	PropTypes 
+	...
+*/
+
+/*
+	Refs
+	Reference to an element e.g buttons, inputs or React components
+	You may not use the ref attribute on function components because they don’t have instances.
+*/ 
+
+// ref in element
+<button ref={btnEl => {this.btnEl = btnEl}} >
+	Show persons
+</button>
+
+// Initialize ref in constructor
+constructor(props) {
+	super(props)
+	this.inputElementRef = React.createRef()
+}
+
+<input type='text' ref={this.inputElementRef} />
+
+// Access element like this
+this.inputElementRef.current
+
+// Context API
+
+// Changing something in the context object will not trigger re-render
+
+// Context.Consumer takes a function as child
+// The function takes in context as argument
+<Context.Consumer>
+{context => (
+	<div>
+		I am a {this.props.type}, my name is {this.props.name}
+		<input
+			type="text"
+			onChange={this.props.changeAnimalName}
+		/>
+		{context.msg}
+	</div>
+)}
+</Context.Consumer>

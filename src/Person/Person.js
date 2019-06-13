@@ -2,8 +2,14 @@ import React, { useState } from "react";
 import "./person.css";
 
 class Person extends React.Component {
-	state = {
-		hello: 'world'
+	constructor(props) {
+		super(props);
+		console.log('		Person constructor!!!');
+		console.log("props :", props);
+		console.log('--------------------');
+		this.state = {
+			hello: 'world'
+		}
 	}
 
 	static getDerivedStateFromProps(props, state) {
@@ -29,8 +35,20 @@ class Person extends React.Component {
 		console.log('		getSnapShotBeforeUpdate!!!');
 		console.log('prevProps', prevProps)
 		console.log('prevState', prevState)
+		console.log('this.window :', window);
 		console.log('--------------------');
-		return null;
+		return {'msg': 'I am the snapshot'};
+	}
+
+	componentDidMount() {
+		console.log('CMD from Person.js!!!');
+	}
+
+	componentDidUpdate(prevProps, prevState, snapshot) {
+		console.log('CDU!!!');
+		console.log('prevProps :', prevProps);
+		console.log('prevState :', prevState);
+		console.log('snapshot', snapshot)
 	}
 	
 	render() {
